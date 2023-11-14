@@ -69,7 +69,7 @@ export class AzureController {
   }
 
   // Retrieves a rooms id.
-  @Post('roomId')
+  @Get('roomId')
   @ApiResponse({
     status: 201,
     description: 'Create Rooms Client',
@@ -109,7 +109,7 @@ export class AzureController {
 
   //Endpoints related with CHAT
   //Creates chat thread and returns the newly created thread's id
-  @Get('createChatThread')
+  @Post('createChatThread')
   @ApiBody({ type: CreateChatThreadDto })
   @ApiResponse({
     status: 201,
