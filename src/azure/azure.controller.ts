@@ -109,7 +109,7 @@ export class AzureController {
 
   //Endpoints related with CHAT
   //Creates chat thread and returns the newly created thread's id
-  @Post('createChatThread')
+  @Get('createChatThread')
   @ApiBody({ type: CreateChatThreadDto })
   @ApiResponse({
     status: 201,
