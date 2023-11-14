@@ -19,6 +19,7 @@ import {
   userIdToUserConfigMap,
 } from './libs/handleChatThread';
 import { SuccessResponse } from '../utils/response/success.response';
+import { createCommunicationRoomsClient } from './libs/roomsClient';
 
 @Injectable()
 export class AzureService {
@@ -42,6 +43,16 @@ export class AzureService {
     };
     console.log(userToken);
     return userToken;
+  }
+
+  async getRoomId(): Promise<string> {
+    try {
+      const communicationRoomsClient = createCommunicationRoomsClient();
+      const room = await communicationRoomsClient.createRoom();
+      return room.id;
+    } catch (error) {
+      throw new Error('Failed to create room');
+    }
   }
 
   //Services related with CHAT

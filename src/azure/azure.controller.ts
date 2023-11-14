@@ -17,7 +17,14 @@ import {
 import { BadRequestResponse } from '../utils/response/badrequest.response';
 import { SuccessResponse } from '../utils/response/success.response';
 import { BaseResponse } from '../utils/response/base.response';
-import { ApiBody, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { NotFoundResponse } from '../utils/response/notFound.response';
 
 @ApiTags('Azure')
@@ -28,7 +35,9 @@ export class AzureController {
   //Endpoints related with VIDEO
   //Creates user and token and returns newly created user's token
   @Post('token')
-  @ApiBody({ type: CreateACSTokenDto })
+  @ApiOperation({
+    summary: 'Create and return token linked to the user using body',
+  })
   @ApiResponse({
     status: 201,
     description: 'Create token',
@@ -59,9 +68,32 @@ export class AzureController {
     );
   }
 
+  // Retrieves a rooms id.
+  @Post('roomId')
+  @ApiResponse({
+    status: 201,
+    description: 'Create Rooms Client',
+    type: BaseResponse,
+  })
+  async getRoomId() {
+    try {
+      const roomId = await this.azureService.getRoomId();
+      return new BaseResponse(HttpStatus.CREATED, 'success', roomId);
+    } catch (error) {
+      return new BaseResponse(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        'error',
+        'Failed to retrieve room ID',
+      );
+    }
+  }
+
   //Creates user and token and returns newly created user's token
   @Get('token')
-  @ApiBody({ type: CreateACSTokenDto })
+  @ApiOperation({
+    summary:
+      'Create and return token linked to the user using query parameters',
+  })
   @ApiResponse({
     status: 201,
     description: 'Create token',
