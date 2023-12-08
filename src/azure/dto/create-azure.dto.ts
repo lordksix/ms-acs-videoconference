@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsNotEmpty } from 'class-validator';
 
 export class CreateACSTokenDto {
   @ApiProperty()
@@ -49,4 +49,15 @@ export class UserConfigDto {
   @ApiProperty()
   @IsString()
   threadId: string;
+}
+
+export class AddParticipantsDto {
+  @ApiProperty()
+  @IsNotEmpty()
+  idUser: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  role: string;
 }
