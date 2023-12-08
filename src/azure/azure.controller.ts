@@ -6,6 +6,7 @@ import {
   Query,
   Param,
   HttpStatus,
+  ParseArrayPipe,
 } from '@nestjs/common';
 import { AzureService } from './azure.service';
 import {
@@ -13,6 +14,7 @@ import {
   CreateChatThreadDto,
   AddUserChatThreadDto,
   UserConfigDto,
+  AddParticipantsDto,
 } from './dto/create-azure.dto';
 import { BadRequestResponse } from '../utils/response/badrequest.response';
 import { SuccessResponse } from '../utils/response/success.response';
@@ -21,7 +23,6 @@ import {
   ApiBody,
   ApiOperation,
   ApiParam,
-  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -70,6 +71,9 @@ export class AzureController {
 
   // Retrieves a rooms id.
   @Get('roomId')
+  @ApiOperation({
+    summary: 'Create room and return the room id of the newly created room',
+  })
   @ApiResponse({
     status: 201,
     description: 'Create Rooms Client',
@@ -77,10 +81,10 @@ export class AzureController {
   })
   async getRoomId() {
     try {
-      const roomId = await this.azureService.getRoomId();
+      const roomId = await this.azureService.createRoomAndGetId();
       return new BaseResponse(HttpStatus.CREATED, 'success', roomId);
     } catch (error) {
-      return new BaseResponse(
+      throw new BaseResponse(
         HttpStatus.INTERNAL_SERVER_ERROR,
         'error',
         'Failed to retrieve room ID',
@@ -104,6 +108,48 @@ export class AzureController {
       HttpStatus.CREATED,
       'success',
       await this.azureService.createToken(query),
+    );
+  }
+
+  // Retrieves all the users that are in a room id.
+  @Post('userInRoom/:roomId')
+  @ApiParam({ name: 'roomId', example: '1790033' })
+  @ApiOperation({
+    summary:
+      'Finds the room from the param ID and returns all user tokens that are participants',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Create Rooms Client',
+    type: BaseResponse,
+  })
+  async getUsersInRoom(@Param('roomId') id: string) {
+    const users = await this.azureService.getUsersTokenFromRoomId(id);
+    return new BaseResponse(HttpStatus.CREATED, 'success', users);
+  }
+
+  // Add a participant to a given room with it's communicationUserId
+  @Post('addParticipant/:roomId')
+  @ApiBody({ type: AddParticipantsDto })
+  @ApiOperation({
+    summary:
+      'Finds the room from the param ID, add all users (gotten from the body of the request) and returns all added user tokens',
+  })
+  @ApiParam({ name: 'roomId', example: '1790033' })
+  @ApiResponse({
+    status: 201,
+    description: 'Create Rooms Client',
+    type: BaseResponse,
+  })
+  async addParticipant(
+    @Body(new ParseArrayPipe({ items: AddParticipantsDto }))
+    participants: AddParticipantsDto[],
+    @Param('roomId') id: string,
+  ) {
+    return new BaseResponse(
+      HttpStatus.CREATED,
+      'success',
+      await this.azureService.addParticipant(id, participants),
     );
   }
 
@@ -143,7 +189,7 @@ export class AzureController {
     );
   }
 
-  @Get('userconfig/:userId')
+  @Get('userConfig/:userId')
   @ApiParam({ name: 'userId', example: 'yourUserId' })
   @ApiBody({ type: UserConfigDto })
   @ApiResponse({

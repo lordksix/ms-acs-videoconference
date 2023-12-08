@@ -4,6 +4,7 @@ import {
   CreateChatThreadDto,
   AddUserChatThreadDto,
   UserConfigDto,
+  AddParticipantsDto,
 } from './dto/create-azure.dto';
 import { CommunicationUserIdentifier } from '@azure/communication-common';
 import { handleUserTokenRequest } from './libs/issueToken';
@@ -19,7 +20,11 @@ import {
   userIdToUserConfigMap,
 } from './libs/handleChatThread';
 import { SuccessResponse } from '../utils/response/success.response';
-import { createCommunicationRoomsClient } from './libs/roomsClient';
+import {
+  addParticipants,
+  createRoom,
+  getUsersInRoom,
+} from './libs/roomsClient';
 
 @Injectable()
 export class AzureService {
@@ -28,7 +33,6 @@ export class AzureService {
     const userToken = await handleUserTokenRequest(
       CreateACSTokenDto.scope ?? '',
     );
-    console.log(userToken);
     return userToken;
   }
 
@@ -45,13 +49,35 @@ export class AzureService {
     return userToken;
   }
 
-  async getRoomId(): Promise<string> {
+  async createRoomAndGetId() {
     try {
-      const communicationRoomsClient = createCommunicationRoomsClient();
-      const room = await communicationRoomsClient.createRoom();
-      return room.id;
+      const room = await createRoom();
+      return room;
     } catch (error) {
-      throw new Error('Failed to create room');
+      throw NotFoundResponse.response(error.message);
+    }
+  }
+
+  //Get all the users there are in a Room
+  async getUsersTokenFromRoomId(id: any) {
+    try {
+      const participantsArray = await getUsersInRoom(id);
+      return participantsArray;
+    } catch (error) {
+      throw NotFoundResponse.response(error.message);
+    }
+  }
+
+  // Add participant to a Room
+  async addParticipant(id: any, participants: AddParticipantsDto[]) {
+    try {
+      return new BaseResponse(
+        HttpStatus.CREATED,
+        'Participant added to the room',
+        await addParticipants(id, participants),
+      );
+    } catch (error) {
+      throw NotFoundResponse.response(error.message);
     }
   }
 
@@ -64,7 +90,7 @@ export class AzureService {
         await createChatThread(CreateChatThreadDto),
       );
     } catch (err) {
-      return NotFoundResponse.response(err.message);
+      throw NotFoundResponse.response(err.message);
     }
   }
 
@@ -92,7 +118,7 @@ export class AzureService {
       // we will return a 404 if the thread to join is not accessible by the server user.
       // The server user needs to be in the thread in order to add someone.
       // So we are returning back that we can't find the thread to add the client user to.
-      return NotFoundResponse.response('Chat thread not found');
+      throw NotFoundResponse.response('Chat thread not found');
     }
   }
 
